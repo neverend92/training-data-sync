@@ -91,6 +91,41 @@ socket.on('sync-down-single', function (data) {
  */
 
 /**
+ * BEGIN Ember Model
+ */
+App.Status = DS.Model.extend({
+	key: DS.attr('string'),
+	value: DS.attr('date'),
+});
+
+App.SmallData = DS.Model.extend({
+	serverId: DS.attr('number'),
+	content: DS.attr('string'),
+	deleted: DS.attr('number'),
+	createdAt: DS.attr('date'),
+	updatedAt: DS.attr('date'),
+});
+/**
+ * END Ember Model
+ */
+
+/**
+ * BEGIN Ember IndexedDB Apdapter
+ */
+App.ApplicationSerializer = DS.IndexedDBSerializer.extend();
+App.ApplicationAdapter = DS.IndexedDBAdapter.extend({
+	databaseName: 'training-data-sync',
+	version: 1,
+	migrations: function () {
+		this.addModel(App.Status);
+		this.addModel(App.SmallData);
+	}
+});
+/**
+ * END Ember IndexedDB Apdapter
+ */
+
+/**
  * BEGIN Ember Router
  */
 App.Router.map(function () {
@@ -105,9 +140,25 @@ App.Router.map(function () {
  */
 App.SmallDatasRoute = Ember.Route.extend({
 	model: function () {
-		
+		return this.store.find('smallData');
 	}
 });
 /**
  * END Ember Route
+ */
+
+/**
+ * BEGIN Ember Controller
+ */
+App.SmallDatasController = Ember.ObjectController.extend({
+	sortProperties: ['name'],
+	sortAscending: true,
+	
+	smallDatasCount: function () {
+		return this.get('model.length');
+	}.property('@each'),
+	
+});
+/**
+ * END Ember Controller
  */

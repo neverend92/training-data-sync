@@ -30,6 +30,20 @@
 				</div>
 			</div>
 		</script>
+			
+		<script type="text/x-handlebars" data-template-name="smallDatas">
+			<p>
+				
+			</p>
+			<p>Anzahl: {{smallDatasCount}}</p>
+			<ul>
+				{{#each model}}
+					<li>{{content}}</li>
+				{{else}}
+					<li><i>Keine Einträge vorhanden.</i></li>
+				{{/each}}
+			</ul>
+		</script>
 		
 		
 		<!-- BEGIN include Javascript-Dateien -->
