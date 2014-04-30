@@ -1,0 +1,13 @@
+{
+  "name": "ember-indexeddb-adapter",
+  "homepage": "https://github.com/kurko/ember-indexeddb-adapter",
+  "_release": "bdead65205",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "bdead6520564f19be289aa6fe4ae36d236497054"
+  },
+  "_source": "https://github.com/kurko/ember-indexeddb-adapter.git",
+  "_target": "*",
+  "_originalSource": "https://github.com/kurko/ember-indexeddb-adapter.git"
+}
