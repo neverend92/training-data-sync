@@ -10,28 +10,27 @@
 	</head>
 	
 	<body>
-		
+						
 		<script type="text/x-handlebars">
-			<div class="navbar navbar-default" role="navigation">
-				<div class="container-fluid">
-					<div class="navbar-header">
-						<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse">
-							<span class="sr-only">Toggle navigation</span>
-							<span class="icon-bar"></span>
-							<span class="icon-bar"></span>
-							<span class="icon-bar"></span>
-						</button>
-						{{#link-to 'index' class="navbar-brand"}}Trainingsdaten-Synchronisation{{/link-to}}
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-4">
+						<div class="list-group">
+							<a class="list-group-item" id="socketStatus"><span style="color: #d9534f;"><i class="glyphicon glyphicon-remove-circle"></i> Offline</span></a>
+							<a class="list-group-item"><strong>Socket-ID: </strong><span id="socketId"><i>nicht verbunden</i></span></a>
+						</div>
+						<div class="list-group" id="sidebar">
+							{{#link-to 'smallDatas' class="list-group-item"}}smallData{{/link-to}}
+						</div>
 					</div>
-					<div class="collapse navbar-collapse" id="navbar-collapse">
-						<ul class="nav navbar-nav">
-							<li>{{#link-to 'workouts'}}Workouts{{/link-to}}</li>
-						</ul>
+				
+					<div class="col-lg-8">
+						{{outlet}}
 					</div>
 				</div>
 			</div>
-			{{outlet}}
 		</script>
+		
 		
 		<!-- BEGIN include Javascript-Dateien -->
 		

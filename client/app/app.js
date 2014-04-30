@@ -27,11 +27,11 @@ console.log('DEBUG: Log <settings>-Object: ' , settings);
 App = Ember.Application.create();
 
 App.Router.map(function () {
-	this.resource('workouts');
+	this.resource('smallDatas');
 });
 
 
-App.WorkoutsRoute = Ember.Route.extend({
+App.SmallDatasRoute = Ember.Route.extend({
 	model: function () {
 		
 	}
