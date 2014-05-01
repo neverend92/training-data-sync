@@ -83,8 +83,8 @@ socket.on('disconnect', function () {
 socket.on('sync-down', function (data) {
 	console.log(data);
 });
-socket.on('sync-down-single', function (data) {
-	console.log(data);
+socket.on('sync-up-single-ok', function (data) {
+	App.__container__.lookup('controller:' + data.typ + 's').send('syncOne', data);
 });
 /**
  * END Verbindung zum Socket
@@ -99,9 +99,10 @@ App.Status = DS.Model.extend({
 });
 
 App.SmallData = DS.Model.extend({
-	serverId: DS.attr('number'),
+	serverId: DS.attr('string'),
 	content: DS.attr('string'),
 	deleted: DS.attr('number'),
+	sync: DS.attr('number'),
 	createdAt: DS.attr('date'),
 	updatedAt: DS.attr('date'),
 });
@@ -115,7 +116,7 @@ App.SmallData = DS.Model.extend({
 App.ApplicationSerializer = DS.IndexedDBSerializer.extend();
 App.ApplicationAdapter = DS.IndexedDBAdapter.extend({
 	databaseName: 'training-data-sync',
-	version: 1,
+	version: 2,
 	migrations: function () {
 		this.addModel(App.Status);
 		this.addModel(App.SmallData);
@@ -158,7 +159,68 @@ App.SmallDatasController = Ember.ObjectController.extend({
 		return this.get('model.length');
 	}.property('@each'),
 	
+	actions: {
+		syncOne: function (data) {
+			var callback = this.store.find(data.typ, data.id);
+			callback.then(function (obj) {
+				//console.log(obj.get('content'));
+				obj.set('serverId', data.serverId);
+				obj.set('sync', 1);
+				//console.log(obj);
+				//obj.save();
+			});
+			
+		},
+		addOne: function () {
+			var t1 = new Date().getTime();
+			
+			var ts = new Date();
+			var content = randomString(10);
+			var smallData = this.store.createRecord('smallData', {
+				content: content,
+				deleted: 0,
+				sync: 0,
+				createdAt: ts,
+				updatedAt: ts
+			});
+			//console.log(smallData);
+			smallData.save();
+			
+			// Neu erstelltes Objekt an den Server senden.
+			socket.emit('sync-up-single', {
+				typ: 'smallData',
+				id: smallData.get('id'),
+				data: {
+					content: smallData.get('content'),
+					deleted: smallData.get('deleted'),
+					createdAt: smallData.get('createdAt'),
+					updatedAt: smallData.get('updatedAt'),
+				}
+			});
+			
+			var t2 = new Date().getTime();
+			console.log('addOne: ' + ((t2-t1)/1000) + 's');
+		}
+	}
+	
 });
 /**
  * END Ember Controller
+ */
+
+/**
+ * BEGIN Helper Funktionen
+ */
+var randomString = function (length) {
+	var text = "";
+	var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstvwxyz0123456789";
+	
+	for (var i = 0; i < length; i++) {
+		text += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+	}
+	
+	return text;
+};
+/**
+ * END Helper Funktionen
  */

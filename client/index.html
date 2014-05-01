@@ -33,12 +33,14 @@
 			
 		<script type="text/x-handlebars" data-template-name="smallDatas">
 			<p>
-				
+				<form {{action 'addOne' on='submit'}} role="form">
+					<button type="submit" class="btn btn-primary">1 Element hinzufügen</button>
+				</form>
 			</p>
 			<p>Anzahl: {{smallDatasCount}}</p>
 			<ul>
 				{{#each model}}
-					<li>{{content}}</li>
+					<li>{{content}} ({{sync}})</li>
 				{{else}}
 					<li><i>Keine Einträge vorhanden.</i></li>
 				{{/each}}

@@ -1,9 +1,17 @@
 require('./db');
+
+// Datenbank-Objekt erstellen
 var mongoose = require('mongoose');
 
+var SmallData = mongoose.model('smallData');
+
+// Port auf dem socket.io lauschen soll.
 var PORT = 3700;
 
+
+// socket.io-Objekt erstellen
 var io = require('socket.io').listen(PORT);
+
 
 io.sockets.on('connection', function (socket) {
 	/**
@@ -28,10 +36,25 @@ io.sockets.on('connection', function (socket) {
 	});
 	
 	socket.on('sync-up-single', function (data) {
-		console.log('Habe Objekt von Typ: ' + data.typ + ' erhalten!');
-		io.sockets.emit('sync-down-single', {
+		//console.log('Habe Objekt von Typ: ' + data.typ + ' erhalten!');
+		/*io.sockets.emit('sync-down-single', {
 			typ: data.typ,
 			data: data.data
+		});*/
+		if (data.typ == 'smallData') {
+			var obj = new SmallData(data.data);
+		} else {
+			console.error('Unknown Object Typ');
+			obj = null;
+		}
+		
+		obj.save(function(err, obj) {
+			if (err) return console.error(err);
+			socket.emit('sync-up-single-ok', {
+				typ: data.typ,
+				id: data.id,
+				serverId: obj._id,
+			});
 		});
 	});
 	/**
