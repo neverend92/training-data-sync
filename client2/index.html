@@ -18,14 +18,32 @@
 						<!--<a class="list-group-item"><strong>Socket-ID: </strong><span id="socketId"><i>nicht verbunden</i></span></a>-->
 					</div>
 					<div class="list-group" id="sidebar">
-						<a href="#" class="list-group-item">smallData</a>
-						<a href="#" class="list-group-item">bigData</a>
+						<a href="#" class="list-group-item" id="menuSmallData">smallData</a>
+						<a href="#" class="list-group-item" id="menuBigData">bigData</a>
 					</div>
 				</div>
 			
 				<div class="col-lg-8">
-					<div class="mainHeader"></div>
-					<div class="mainContetn"></div>
+					<div id="mainHeader">
+						<a href="#" class="btn btn-success" id="btnSmallDataAddOne">Eintrag hinzufügen</a>
+						<a href="#" class="btn btn-success" id="btnSmallDataAddMultiple">Mehrere Einträge hinzufügen</a>
+						<a href="#" class="btn btn-danger" id="btnSmallDataClear">Alles löschen</a>
+					</div>
+					<table class="table" id="mainContent">
+						<thead>
+							<tr>
+								<th>ID</th>
+								<th>(Haupt-) Inhalt</th>
+								<th>Gelöscht</th>
+								<th>Sync</th>
+								<th>Erstellt</th>
+								<th>Bearbeitet</th>
+								<th>&nbsp;</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
 				</div>
 			</div>
 		</div>

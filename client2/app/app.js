@@ -52,6 +52,70 @@ db.open({
 }).done(function (s) {
 	server = s;
 });
+
+var dbAdd = function (typ, data, i, n) {
+	server.add(typ, data).done(function (items) {
+		// Neu erstelltes Objekt an den Server senden.
+		socket.emit('sync-up-single', {
+			typ: 'smallData',
+			id: items[0].id,
+			data: {
+				content: items[0].content,
+				deleted: items[0].deleted,
+				createdAt: items[0].createdAt,
+				updatedAt: items[0].updatedAt,
+			}
+		});
+		
+		console.log('Item (' + typ + ') stored with ID: ' + items[0].id + '.');
+		if (i == (n-1) && n != 1) {
+			console.timeEnd('dbAdd');
+		}
+		dbFindAll(typ);
+	});
+};
+
+var dbRemove = function (typ, id) {
+	server.remove(typ, id).done(function (key) {
+		console.log('Item (' + typ + ') with ID: ' + key + ' removed.');
+		dbFindAll(typ);
+	});
+};
+
+var dbDelete = function (typ, id) {
+	server.query(typ).filter('id', id).modify({deleted: 1}).execute().done(function (items) {
+		console.log('Item (' + typ + ') with ID: ' + items[0].id + ' deleted.');
+		dbFindAll(typ);
+	});
+};
+
+var dbClear = function (typ) {
+	server.clear(typ).done(function () {
+		console.log('Table ' + typ + ' cleared.');
+		dbFindAll(typ);
+	});
+};
+
+var dbFindAll = function (typ) {
+	console.time('dbFindAll');
+	server.query(typ).filter().execute().done(function (items) {
+		$('#mainContent tbody').html('');
+		$.each(items, function (key, value) {
+			$('#mainContent tbody').append('<tr> \
+					<td>' + value.id + '</td> \
+					<td>' + value.content + '</td> \
+					<td>' + value.deleted + '</td> \
+					<td>' + value.sync + '</td> \
+					<td>' + value.createdAt + '</td> \
+					<td>' + value.updatedAt + '</td> \
+					<td><a href="#" class="btn btn-danger" onclick="dbDelete(\'' + typ + '\', ' + value.id + ');">L&oumlschen</a></td> \
+					</tr> \
+			');
+		});
+		console.log('Anzahl der Eintraege: ' + items.length);
+		console.timeEnd('dbFindAll');
+	});
+};
 /**
  * END Datenbank-Verbindung
  */
@@ -112,7 +176,10 @@ socket.on('sync-down-ok', function (data) {
 	console.log(data);
 });
 socket.on('sync-up-single-ok', function (data) {
-	App.__container__.lookup('controller:' + data.typ + 's').send('syncOne', data);
+	server.query(data.typ).filter('id', data.id).modify({serverId: data.serverId, sync: true}).execute().done(function (items) {
+		console.log('Item (' + typ + ') with ID: ' + items[0].id + ' synced.');
+		localStorage.setItem('last-sync', new Date());
+	});
 });
 socket.on('sync-down-single', function (data) {
 	App.__container__.lookup('controller:' + data.typ + 's').send('syncDownOne', data);
@@ -121,13 +188,61 @@ socket.on('sync-down-single', function (data) {
  * END Verbindung zum Socket
  */
 
+/**
+ * BEGIN EventListener
+ */
+$('#menuSmallData').bind('click', function () {
+	$('#sidebar a').removeClass('active');
+	$(this).addClass('active');
+	// Alle Elemente "smallData" finden.
+	dbFindAll('smallData');
+});
+$('#btnSmallDataAddOne').bind('click', function () {
+	smallDataAdd(1, 1);
+});
 
+$('#btnSmallDataAddMultiple').bind('click', function () {
+	console.time('dbAdd');
+	
+	var n = 100;
+	
+	for (var i = 0; i < n; i++) {
+		smallDataAdd(i, n);
+	}
+});
 
+var smallDataAdd = function (i, n) {
+	var time = new Date();
+	var data = {
+		serverId: null,
+		content: randomString(10),
+		deleted: 0,
+		sync: false,
+		createdAt: time,
+		updatedAt: time
+	};
+	
+	dbAdd('smallData', data, i, n);
+};
+
+$('#btnSmallDataClear').bind('click', function () {
+	dbClear('smallData');
+});
+
+$('#menuBigData').bind('click', function () {
+	$('#sidebar a').removeClass('active');
+	$(this).addClass('active');
+	// Alle Elemente "bigData" finden.
+	dbFindAll('bigData');
+});
+/**
+ * END EventListener
+ */
 
 /**
  * BEGIN Ember Controller
  */
-App.SmallDatasController = Ember.ObjectController.extend({
+/*App.SmallDatasController = Ember.ObjectController.extend({
 	sortProperties: ['name'],
 	sortAscending: true,
 	
@@ -212,7 +327,7 @@ App.SmallDatasController = Ember.ObjectController.extend({
 		}
 	}
 	
-});
+});*/
 /**
  * END Ember Controller
  */
