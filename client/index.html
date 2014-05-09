@@ -17,7 +17,7 @@
 					<div class="col-lg-4">
 						<div class="list-group">
 							<a class="list-group-item" id="socketStatus"><span style="color: #d9534f;"><i class="glyphicon glyphicon-remove-circle"></i> Offline</span></a>
-							<a class="list-group-item"><strong>Socket-ID: </strong><span id="socketId"><i>nicht verbunden</i></span></a>
+							{{!--<a class="list-group-item"><strong>Socket-ID: </strong><span id="socketId"><i>nicht verbunden</i></span></a>--}}
 						</div>
 						<div class="list-group" id="sidebar">
 							{{#link-to 'smallDatas' class="list-group-item"}}smallData{{/link-to}}
@@ -35,6 +35,11 @@
 			<p>
 				<form {{action 'addOne' on='submit'}} role="form">
 					<button type="submit" class="btn btn-primary">1 Element hinzufügen</button>
+				</form>
+			</p>
+			<p>
+				<form {{action 'addMultiple' on='submit'}} role="form">
+					<button type="submit" class="btn btn-primary">1000 Element hinzufügen</button>
 				</form>
 			</p>
 			<p>Anzahl: {{smallDatasCount}}</p>

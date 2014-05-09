@@ -23,6 +23,17 @@ console.log('DEBUG: Log <settings>-Object: ' , settings);
  * END Config-Datei laden.
  */
 
+/**
+ * BEGIN Status der App laden.
+ */
+/*var lastSync = localStorage.get('last-sync');
+if (lastSync == undefined) {
+	localStorage.set('last-sync', null);
+}*/
+/**
+ * END Status der App laden.
+ */
+
 // Initialisiere Ember Application
 App = Ember.Application.create({
 	//LOG_TRANSITIONS: true
@@ -70,7 +81,7 @@ socket.on('connect', function () {
 	console.log('Verbindung zum Server hergestellt.');
 	
 	socket.emit('sync-down', {
-		msg: 'Sync-Down-Request'
+		lastSync: localStorage.getItem('last-sync')
 	});
 });
 
@@ -80,11 +91,14 @@ socket.on('disconnect', function () {
 	console.log('Verbindung zum Server getrennt.');
 });
 
-socket.on('sync-down', function (data) {
+socket.on('sync-down-ok', function (data) {
 	console.log(data);
 });
 socket.on('sync-up-single-ok', function (data) {
 	App.__container__.lookup('controller:' + data.typ + 's').send('syncOne', data);
+});
+socket.on('sync-down-single', function (data) {
+	App.__container__.lookup('controller:' + data.typ + 's').send('syncDownOne', data);
 });
 /**
  * END Verbindung zum Socket
@@ -93,10 +107,6 @@ socket.on('sync-up-single-ok', function (data) {
 /**
  * BEGIN Ember Model
  */
-App.Status = DS.Model.extend({
-	key: DS.attr('string'),
-	value: DS.attr('date'),
-});
 
 App.SmallData = DS.Model.extend({
 	serverId: DS.attr('string'),
@@ -116,9 +126,8 @@ App.SmallData = DS.Model.extend({
 App.ApplicationSerializer = DS.IndexedDBSerializer.extend();
 App.ApplicationAdapter = DS.IndexedDBAdapter.extend({
 	databaseName: 'training-data-sync',
-	version: 2,
+	version: 7,
 	migrations: function () {
-		this.addModel(App.Status);
 		this.addModel(App.SmallData);
 	}
 });
@@ -163,16 +172,38 @@ App.SmallDatasController = Ember.ObjectController.extend({
 		syncOne: function (data) {
 			var callback = this.store.find(data.typ, data.id);
 			callback.then(function (obj) {
-				//console.log(obj.get('content'));
 				obj.set('serverId', data.serverId);
 				obj.set('sync', 1);
-				//console.log(obj);
-				//obj.save();
+			});
+			localStorage.setItem('last-sync', new Date());
+		},
+		syncDownOne: function (data) {
+			var callback = this.store.findQuery(data.typ, {
+				serverId: data.serverId
 			});
 			
+			if (callback.isFulfilled) {
+				callback.then(function (obj) {
+					obj.set('content', data.data.content);
+					obj.set('deleted', data.data.deleted);
+					obj.set('updatedAt', data.data.updatedAt);
+					obj.set('sync', 1);
+				});
+			} else {
+				var smallData = this.store.createRecord('smallData', {
+					serverId: data.serverId,
+					content: data.data.content,
+					deleted: data.data.deleted,
+					sync: 1,
+					createdAt: data.data.createdAt,
+					updatedAt: data.data.updatedAt
+				});
+				smallData.save();
+			}
+			localStorage.setItem('last-sync', new Date());
 		},
 		addOne: function () {
-			var t1 = new Date().getTime();
+			//var t1 = new Date().getTime();
 			
 			var ts = new Date();
 			var content = randomString(10);
@@ -198,8 +229,19 @@ App.SmallDatasController = Ember.ObjectController.extend({
 				}
 			});
 			
+			//var t2 = new Date().getTime();
+			//console.log('addOne: ' + ((t2-t1)/1000) + 's');
+		},
+		addMultiple: function() {
+			var t1 = new Date().getTime();
+			for (var i = 0; i < 10000; i++) {
+				this.send('addOne');
+			}
 			var t2 = new Date().getTime();
-			console.log('addOne: ' + ((t2-t1)/1000) + 's');
+			console.log('addMultiple: ' + ((t2-t1)/1000) + 's');
+		},
+		clearStore: function() {
+			this.store.clear();
 		}
 	}
 	

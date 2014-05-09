@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no">
+		<title>Trainingsdaten-Synchronisation</title>
+		
+		<link rel="stylesheet" type="text/css" href="vendor/bootstrap/dist/css/bootstrap.css">
+		<link rel="stylesheet" type="text/css" href="app/public/css/style.css">
+	</head>
+	
+	<body>
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-4">
+					<div class="list-group">
+						<a class="list-group-item" id="socketStatus"><span style="color: #d9534f;"><i class="glyphicon glyphicon-remove-circle"></i> Offline</span></a>
+						<!--<a class="list-group-item"><strong>Socket-ID: </strong><span id="socketId"><i>nicht verbunden</i></span></a>-->
+					</div>
+					<div class="list-group" id="sidebar">
+						<a href="#" class="list-group-item">smallData</a>
+						<a href="#" class="list-group-item">bigData</a>
+					</div>
+				</div>
+			
+				<div class="col-lg-8">
+					<div class="mainHeader"></div>
+					<div class="mainContetn"></div>
+				</div>
+			</div>
+		</div>
+		<!-- BEGIN include Javascript-Dateien -->
+		
+		<!-- BEGIN include vendor-Dateien -->
+		<script src="vendor/jquery/dist/jquery.js"></script>
+		<script src="vendor/socket.io-client/dist/socket.io.js"></script>
+		<script src="vendor/db.js/src/db.js"></script>
+		<!-- END include vendor-Dateien -->
+		
+		<!-- BEGIN include eigene Dateien -->
+		<script src="app/app.js"></script>
+		<!-- END include eigene Dateien -->
+		
+		<!-- END include Javascript-Dateien -->
+	</body>
+</html>
