@@ -1,12 +1,12 @@
 /**
  * BEGIN Config-Datei laden.
  */
-// Settings-Objekt, das bei erfolgreichem Laden befühlt wird.
+// Settings-Objekt, das bei erfolgreichem Laden befï¿½hlt wird.
 var settings;
 $.ajax({
 	// Ort der Config-Datei.
 	url: 'app/config/config.json',
-	// Kein asynchroner Ajax-Call, damit Settings-Objekt verfügbar ist
+	// Kein asynchroner Ajax-Call, damit Settings-Objekt verfï¿½gbar ist
 	// wenn Anwendung gestartet wird.
 	async: false,
 	// Daten-Typ der Config-Datei.
@@ -123,7 +123,7 @@ var dbFindAll = function (typ) {
 /**
  * BEGIN Verbindung zum Socket
  */
-// Array mit HTML-Code für den jeweiligen Verbindungs-Status
+// Array mit HTML-Code fï¿½r den jeweiligen Verbindungs-Status
 var socketStatus = {
 	'online': '<span style="color: #5cb85c;"><i class="glyphicon glyphicon-ok-circle"></i> Online</span>',
 	'offline': '<span style="color: #d9534f;"><i class="glyphicon glyphicon-remove-circle"></i> Offline</span>',
@@ -136,8 +136,8 @@ var socketIP = settings.server.ip;
 // Port des Servers aus Einstellung
 var socketPort = settings.server.port;
 
-// Prüfen der abgerufenen Einstellungen
-// IP und Port dürfen nicht leer sein.
+// Prï¿½fen der abgerufenen Einstellungen
+// IP und Port dï¿½rfen nicht leer sein.
 if (socketIP == undefined || socketPort == undefined) {
 	/**
 	 * @TODO: Fehlermeldung durch Fallback ersetzen.
@@ -150,23 +150,29 @@ if (socketIP == undefined || socketPort == undefined) {
 // socket-Objekt erhalten.
 var socket = io.connect('http://' + socketIP + ':' + socketPort);
 
-// Binding für den Verbindungsaufbau zum Socket
+// Binding fï¿½r den Verbindungsaufbau zum Socket
 socket.on('connecting', function () {
 	$('#socketStatus').html(socketStatus.connect);
 	console.log('Verbindung zum Server wird aufgebaut...');
 });
 
-// Binding für die abgeschlossene Verbindungsherstellung
+// Binding fï¿½r die abgeschlossene Verbindungsherstellung
 socket.on('connect', function () {
 	$('#socketStatus').html(socketStatus.online);
 	console.log('Verbindung zum Server hergestellt.');
+	
+	// Element ermitteln, die nicht synchronisiert sind.#
+	// Dabei sind ALLE Datentypen zu durchlaufen.
+	server.query('smallData').filter('sync', false).execute().done(function (items) {
+		console.log(items);
+	});
 	
 	socket.emit('sync-down', {
 		lastSync: localStorage.getItem('last-sync')
 	});
 });
 
-// Binding für die Verbindungstrennung
+// Binding fï¿½r die Verbindungstrennung
 socket.on('disconnect', function () {
 	$('#socketStatus').html(socketStatus.offline);
 	console.log('Verbindung zum Server getrennt.');
