@@ -123,7 +123,13 @@ var dbAdd = function (typ, data, i, n) {
 };
 
 /**
- * Löscht ein Element persistent aus der Datenbank
+ * Löscht ein Element persistent aus der Datenbank.
+ * 
+ * Der Datentyp wird über die Variable "typ" übergeben,
+ * sodass erkennbar ist, in welcher Tabelle das Objekt
+ * gelöscht werden soll.
+ * Die Variable "id" gibt dabei die ID des zu löschenden
+ * Objekts an.
  * 
  * @param String typ
  * @param Integer id
@@ -138,6 +144,15 @@ var dbRemove = function (typ, id) {
 /**
  * Setzt bei einem Element den Flag "deleted" auf 1.
  * 
+ * Der Datentyp wird über die Variable "typ" übergeben,
+ * sodass erkennbar ist, in welcher Tabelle das Objekt
+ * gelöscht werden soll.
+ * Die Variable "id" gibt dabei die ID des zu löschenden
+ * Objekts an.
+ * Die Variablen "i" und "n" sind nur bei mehrfachem Aufruf der
+ * Funktion von Bedeutung und erkennen, wann der letzte Aufruf erfolgt.
+ * Hierdurch ist es möglich die Zeit für bspw. 100 Einfügungen zu messen.
+ * 
  * @param String typ
  * @param Integer id
  * @param Integer i
@@ -145,6 +160,10 @@ var dbRemove = function (typ, id) {
  */
 var dbDelete = function (typ, id, i, n) {
 	server.query(typ).filter('id', id).modify({deleted: 1}).execute().done(function (items) {
+		/**
+		 * @TODO:
+		 * Änderungen an Server senden.
+		 */
 		console.log('Item (' + typ + ') with ID: ' + items[0].id + ' deleted.');
 		if (i == (n-1) && n != 1) {
 			console.timeEnd('dbFindAndDeleteAll');
@@ -159,6 +178,10 @@ var dbDelete = function (typ, id, i, n) {
 /**
  * Löcht alle Element aus einem Objekt-Store.
  * 
+ * Der Datentyp wird über die Variable "typ" übergeben,
+ * sodass erkennbar ist, welcher Objekt-Store
+ * geleert werden soll.
+ * 
  * @param String typ
  */
 var dbClear = function (typ) {
@@ -169,7 +192,11 @@ var dbClear = function (typ) {
 };
 
 /**
- * Ermittelt alle Elemente eines Objekt-Stores
+ * Ermittelt alle Elemente eines Objekt-Stores.
+ * 
+ * Der Datentyp wird über die Variable "typ" übergeben,
+ * sodass erkennbar ist, aus welchem Objekt-Store die
+ * Daten geladen werden sollen.
  * 
  * @param String typ
  */
@@ -197,6 +224,10 @@ var dbFindAll = function (typ) {
 /**
  * Setzt bei allen Elementen des Objekt-Stores den Flag
  * "deleted" auf 1.
+ * 
+ * Der Datentyp wird über die Variable "typ" übergeben,
+ * sodass erkennbar ist, in welchem Objekt-Store alle
+ * Elemente mit "deleted" gekennzeichent werden sollen.
  * 
  * @param String typ
  */
@@ -235,10 +266,7 @@ var socketPort = settings.server.port;
 // Prüfen der abgerufenen Einstellungen
 // IP und Port duerfen nicht leer sein.
 if (socketIP == undefined || socketPort == undefined) {
-	/**
-	 * @TODO: Fehlermeldung durch Fallback ersetzen.
-	 */
-	alert('Error Loading Settings');
+	alert('Keine Einstellungen gefunden, die Anwendung kann nicht gestartet werden!');
 	console.log('Error Loading Settings');
 }
 
@@ -293,22 +321,30 @@ socket.on('sync-down-single', function (data) {
 /**
  * BEGIN EventListener
  */
-
 // Listener fuer Menu-Punkte
 $('#menuSmallData').bind('click', function () {
-	$('#sidebar a').removeClass('active');
-	$(this).addClass('active');
-	addListener('smallData');
-	// Alle Elemente "smallData" finden.
-	dbFindAll('smallData');
+	handleClick('smallData', $(this));
 });
 $('#menuBigData').bind('click', function () {
-	$('#sidebar a').removeClass('active');
-	$(this).addClass('active');
-	addListener('bigData');
-	// Alle Elemente "bigData" finden.
-	dbFindAll('bigData');
+	handleClick('bigData', $(this));
 });
+$('#menuStructureData1').bind('click', function () {
+	handleClick('structureData1', $(this));
+});
+$('#menuStructureData2').bind('click', function () {
+	handleClick('structureData2', $(this));
+});
+$('#menuStructureData3').bind('click', function () {
+	handleClick('structureData3', $(this));
+});
+
+var handleClick = function (typ, activeLink) {
+	$('#sidebar a').removeClass('active');
+	activeLink.addClass('active');
+	addListener(typ);
+	// Alle Elemente "typ" finden.
+	dbFindAll(typ);
+}
 
 var smallDataAdd = function (i, n) {
 	var time = new Date();
@@ -388,16 +424,8 @@ var addListener = function (typ) {
  * END EventListener
  */
 
-/**
- * BEGIN Ember Controller
- */
 /*App.SmallDatasController = Ember.ObjectController.extend({
-	sortProperties: ['name'],
-	sortAscending: true,
 	
-	smallDatasCount: function () {
-		return this.get('model.length');
-	}.property('@each'),
 	
 	actions: {
 		syncOne: function (data) {
@@ -433,53 +461,9 @@ var addListener = function (typ) {
 			}
 			localStorage.setItem('last-sync', new Date());
 		},
-		addOne: function () {
-			//var t1 = new Date().getTime();
-			
-			var ts = new Date();
-			var content = randomString(10);
-			var smallData = this.store.createRecord('smallData', {
-				content: content,
-				deleted: 0,
-				sync: 0,
-				createdAt: ts,
-				updatedAt: ts
-			});
-			//console.log(smallData);
-			smallData.save();
-			
-			// Neu erstelltes Objekt an den Server senden.
-			socket.emit('sync-up-single', {
-				typ: 'smallData',
-				id: smallData.get('id'),
-				data: {
-					content: smallData.get('content'),
-					deleted: smallData.get('deleted'),
-					createdAt: smallData.get('createdAt'),
-					updatedAt: smallData.get('updatedAt'),
-				}
-			});
-			
-			//var t2 = new Date().getTime();
-			//console.log('addOne: ' + ((t2-t1)/1000) + 's');
-		},
-		addMultiple: function() {
-			var t1 = new Date().getTime();
-			for (var i = 0; i < 10000; i++) {
-				this.send('addOne');
-			}
-			var t2 = new Date().getTime();
-			console.log('addMultiple: ' + ((t2-t1)/1000) + 's');
-		},
-		clearStore: function() {
-			this.store.clear();
-		}
 	}
 	
 });*/
-/**
- * END Ember Controller
- */
 
 /**
  * BEGIN Helper Funktionen
