@@ -4,7 +4,7 @@ var mongoose = require('mongoose');
 
 //var db = mongoose.connection;
 
-// Verbindungsfehler prüfen.
+// Verbindungsfehler prï¿½fen.
 /*db.on('error', console.error('No Database Connection'));
 db.once('open', function () {
 	mongoose.model('smallData', new mongoose.Schema({
@@ -17,7 +17,7 @@ db.once('open', function () {
 });*/
 
 /**
- * BEGIN benötigte Objekte abbilden
+ * BEGIN benÃ¶tigte Objekte abbilden
  */
 mongoose.model('smallData', new mongoose.Schema({
 	id: Number,
@@ -27,9 +27,9 @@ mongoose.model('smallData', new mongoose.Schema({
 	updatedAt: Date
 }));
 /**
- * BEGIN benötigte Objekte abbilden
+ * BEGIN benï¿½tigte Objekte abbilden
  */
 
 //Verbindung mit Datenbank aufbauen.
-//ACHTUNG dafür muss der Server gestartet werden!!!
+//ACHTUNG dafï¿½r muss der Server gestartet werden!!!
 mongoose.connect('mongodb://localhost/training-data-sync');

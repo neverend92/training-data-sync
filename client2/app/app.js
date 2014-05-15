@@ -24,14 +24,40 @@ console.log('DEBUG: Log <settings>-Object: ' , settings);
  */
 
 /**
+ * BEGIN Helper Funktionen
+ */
+var randomString = function (length) {
+	var text = "";
+	var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstvwxyz0123456789";
+	
+	for (var i = 0; i < length; i++) {
+		text += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+	}
+	
+	return text;
+};
+
+var randomBlob = function () {
+	var text = "";
+	var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstvwxyz0123456789";
+	
+	for (var i = 0; i < (1024*1024*5); i++) {
+		text += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+	}
+	
+	return text; 
+};
+/**
+ * END Helper Funktionen
+ */
+
+/**
  * BEGIN Status der App laden.
  */
 $('#mainHeader').hide();
 $('#mainContent').hide();
-/*var lastSync = localStorage.get('last-sync');
-if (lastSync == undefined) {
-	localStorage.set('last-sync', null);
-}*/
+
+var randomBlob = randomBlob();
 /**
  * END Status der App laden.
  */
@@ -47,7 +73,7 @@ db.open({
 	server: 'training-data-sync',
 	// Version der Datenbank, muss bei strukturellen Änderungen
 	// erhöht werden.
-	version: 1,
+	version: 2,
 	// Datenbank-Schema, ist flexibel
 	// Lediglich Key und AutoIncrement müssen angegeben werden.
 	schema: {
@@ -57,6 +83,9 @@ db.open({
 		bigData: {
 			key: { keyPath: 'id', autoIncrement: true }
 		},
+		structureData: {
+			key: { keyPath: 'id', autoIncrement: true }
+		},
 		structureData1: {
 			key: { keyPath: 'id', autoIncrement: true }
 		},
@@ -64,6 +93,12 @@ db.open({
 			key: { keyPath: 'id', autoIncrement: true }
 		},
 		structureData3: {
+			key: { keyPath: 'id', autoIncrement: true }
+		},
+		zStructureData13: {
+			key: { keyPath: 'id', autoIncrement: true }
+		},
+		structureDataOO: {
 			key: { keyPath: 'id', autoIncrement: true }
 		}
 	}
@@ -94,16 +129,36 @@ db.open({
 var dbAdd = function (typ, data, i, n) {
 	server.add(typ, data).done(function (items) {
 		// Neu erstelltes Objekt an den Server senden.
-		socket.emit('sync-up-single', {
-			typ: typ,
-			id: items[0].id,
-			data: {
+		if (typ == 'smallData') {
+			data = {
+				content: items[0].content,
+				deleted: items[0].deleted,
+				createdAt: items[0].createdAt,
+				updatedAt: items[0].updatedAt,
+			};
+		} else if (typ == 'bigData') {
+			data = {
 				content: items[0].content,
 				blob: items[0].blob,
 				deleted: items[0].deleted,
 				createdAt: items[0].createdAt,
 				updatedAt: items[0].updatedAt,
-			}
+			};
+		} else if (typ == 'structureDataOO') {
+			data = {
+				content: items[0].content,
+				subObj1: items[0].subObj1,
+				subObj2: items[0].subObj2,
+				deleted: items[0].deleted,
+				createdAt: items[0].createdAt,
+				updatedAt: items[0].updatedAt,
+			};
+		}
+		
+		socket.emit('sync-up-single', {
+			typ: typ,
+			id: items[0].id,
+			data: data
 		});
 		
 		console.log('Item (' + typ + ') stored with ID: ' + items[0].id + '.');
@@ -274,7 +329,7 @@ if (socketIP == undefined || socketPort == undefined) {
 // socket-Objekt erhalten.
 var socket = io.connect('http://' + socketIP + ':' + socketPort);
 
-// Binding fuer den Verbindungsaufbau zum Socket
+// Binding für den Verbindungsaufbau zum Socket
 socket.on('connecting', function () {
 	$('#socketStatus').html(socketStatus.connect);
 	console.log('Verbindung zum Server wird aufgebaut...');
@@ -328,30 +383,34 @@ $('#menuSmallData').bind('click', function () {
 $('#menuBigData').bind('click', function () {
 	handleClick('bigData', $(this));
 });
-$('#menuStructureData1').bind('click', function () {
-	handleClick('structureData1', $(this));
+$('#menuStructureData').bind('click', function () {
+	handleClick('structureData', $(this));
 });
-$('#menuStructureData2').bind('click', function () {
-	handleClick('structureData2', $(this));
-});
-$('#menuStructureData3').bind('click', function () {
-	handleClick('structureData3', $(this));
+$('#menuStructureDataOO').bind('click', function () {
+	handleClick('structureDataOO', $(this));
 });
 
 var handleClick = function (typ, activeLink) {
 	$('#sidebar a').removeClass('active');
 	activeLink.addClass('active');
+	$('#mainContent tbody').html('<tr><td colspan="7">Lade Daten...</td></tr>');
 	addListener(typ);
 	// Alle Elemente "typ" finden.
 	dbFindAll(typ);
-}
+};
 
+/**
+ * Fügt ein Element des Typs "smallData" hinzu.
+ * 
+ * @param Integer i
+ * @param Integer n
+ */
 var smallDataAdd = function (i, n) {
 	var time = new Date();
 	var data = {
 		serverId: null,
-		content: randomString(10),
-		blob: null,
+		content: 'ABCDEFGHI',
+		//content: randomString(10),
 		deleted: 0,
 		sync: false,
 		createdAt: time,
@@ -360,9 +419,16 @@ var smallDataAdd = function (i, n) {
 	
 	dbAdd('smallData', data, i, n);
 };
+
+/**
+ * Fügt ein Element des Typs "bigData" hinzu.
+ * 
+ * @param Integer i
+ * @param Integer n
+ */
 var bigDataAdd = function (i, n) {
 	var time = new Date();
-	var blob = randomBlob();
+	var blob = randomBlob;
 	var size = (blob.length / 1024) / 1024;
 	size += ' MB';
 	
@@ -377,45 +443,124 @@ var bigDataAdd = function (i, n) {
 	};
 	
 	dbAdd('bigData', data, i, n);
-}
+};
 
+/**
+ * Fügt ein Element des Typs "structureDataOO" hinzu.
+ * 
+ * @param Integer i
+ * @param Integer n
+ */
+var structureDataOOAdd = function (i, n) {
+	var time = new Date();
+	
+	var subObj1 = {
+		id: 1,
+		name: 'Test'
+	};
+	
+	var subObj2 = [{
+		id: 1,
+		name: 'Test'
+	}, {
+		id: 2,
+		name: 'Test2'
+	}];
+	
+	var data = {
+		serverId: null,
+		content: 'ABCDEFGHI',
+		subObj1: subObj1,
+		subObj2: subObj2,
+		deleted: 0,
+		sync: false,
+		createdAt: time,
+		updatedAt: time
+	};
+	
+	dbAdd('structureDataOO', data, i, n);
+};
 
+/**
+ * Fügt ein Element des Typs "structureData1" hinzu.
+ * 
+ * @param Integer i
+ * @param Integer n
+ */
+var structureData1Add = function (i, n) {
+	var time = new Date();
+	
+	var data = {
+		serverId: null,
+		content: 'ABCDEFGHI',
+		subObj1: subObj1,
+		deleted: 0,
+		sync: false,
+		createdAt: time,
+		updatedAt: time
+	};
+	
+	dbAdd('structureData1', data, i, n);
+};
+
+/**
+ * Fügt die Listener entsprechend dem aktuell
+ * ausgewählten Datentyps in der Navigationsleiste
+ * hinzu.
+ */
 var addListener = function (typ) {
+	// Header (Buttons) anzeigen.
 	$('#mainHeader').show();
+	// Content (Tabelle) anzeigen.
 	$('#mainContent').show();
+	// Überschrift setzen -> aktuell ausgewählter Datentyp.
 	$('#emptyInfoText').html(typ);
 	
+	// Alte Listener entfernen.
 	$('#btnClear').unbind();
+	// "Tabelle leeren"-Button Listener hinzufügen.
 	$('#btnClear').bind('click', function () {
 		dbClear(typ);
 	});
 	
+	// Alte Listener entfernen.
 	$('#btnDeleteAll').unbind();
+	// "Alle Einträge löschen"-Button Listener hinzufügen.
 	$('#btnDeleteAll').bind('click', function () {
 		dbFindAndDeleteAll(typ);
 	});
 	
+	// Alte Listener entfernen.
 	$('#btnAddOne').unbind();
+	// "Eintrag hinzufügen"-Button Listener hinzufügen.
 	$('#btnAddOne').bind('click', function () {
 		if (typ == 'smallData')	{
 			smallDataAdd(1, 1);
 		} else if (typ == 'bigData') {
 			bigDataAdd(1, 1);
+		} else if (typ == 'structureDataOO') {
+			structureDataOOAdd(1, 1);
 		}
 	});
 	
+	// Alte Listener entfernen.
 	$('#btnAddMultiple').unbind();
+	// "Mehrere Einträge"-Button Listener hinzufügen.
 	$('#btnAddMultiple').bind('click', function () {
 		console.time('dbAdd');
 		
-		var n = 100;
-		
-		for (var i = 0; i < n; i++) {
-			if (typ == 'smallData')	{
-				smallDataAdd(i, n);
-			} else if (typ == 'bigData') {
+		if (typ == 'smallData')	{
+			for (var i = 0; i < 1000; i++) {
+				smallDataAdd(i, 1000);
+			}
+		} else if (typ == 'bigData') {
+			for (var i = 0; i < 10; i++) {
 				console.log('bigData: ' + i);
-				bigDataAdd(i, n);
+				bigDataAdd(i, 10);
+			}
+		} else if (typ == 'structureDataOO') {
+			for (var i = 0; i < 1000; i++) {
+				structureDataOOAdd(i, 1000);
 			}
 		}
 	});
@@ -464,31 +609,3 @@ var addListener = function (typ) {
 	}
 	
 });*/
-
-/**
- * BEGIN Helper Funktionen
- */
-var randomString = function (length) {
-	var text = "";
-	var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstvwxyz0123456789";
-	
-	for (var i = 0; i < length; i++) {
-		text += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-	}
-	
-	return text;
-};
-
-var randomBlob = function () {
-	var text = "";
-	var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstvwxyz0123456789";
-	
-	for (var i = 0; i < (1024*1024*5); i++) {
-		text += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-	}
-	
-	return text; 
-}
-/**
- * END Helper Funktionen
- */
