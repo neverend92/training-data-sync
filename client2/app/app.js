@@ -73,7 +73,7 @@ db.open({
 	server: 'training-data-sync',
 	// Version der Datenbank, muss bei strukturellen Änderungen
 	// erhöht werden.
-	version: 2,
+	version: 3,
 	// Datenbank-Schema, ist flexibel
 	// Lediglich Key und AutoIncrement müssen angegeben werden.
 	schema: {
@@ -81,9 +81,6 @@ db.open({
 			key: { keyPath: 'id', autoIncrement: true }
 		},
 		bigData: {
-			key: { keyPath: 'id', autoIncrement: true }
-		},
-		structureData: {
 			key: { keyPath: 'id', autoIncrement: true }
 		},
 		structureData1: {
@@ -178,6 +175,70 @@ var dbAdd = function (typ, data, i, n) {
 };
 
 /**
+ * Fügt ein Element zur IndexedDB hinzu.
+ * 
+ * Diese Funktion ist speziell für den Datentyp "structureData",
+ * da dieser verzeweigt ist und in einem Schritt mehrere Objekt-Stores
+ * befüllt werden müssen.
+ * 
+ * Die Daten für das neue Objekt werden jeweils in der Variable
+ * "data1", "data2" bzw. "data3" übergeben und auch so direkt in der 
+ * Datenbank abgelegt.
+ * Die Variablen "i" und "n" sind nur bei mehrfachem Aufruf der
+ * Funktion von Bedeutung und erkennen, wann der letzte Aufruf erfolgt.
+ * Hierdurch ist es möglich die Zeit für bspw. 100 Einfügungen zu messen.
+ * 
+ * @param Array data1
+ * @param Array data2
+ * @param Array data3
+ * @param Integer i
+ * @param Integer n
+ */
+var dbAdd2 = function (data1, data2, data3, data13, i, n) {
+	// Zunächst "structureData2" anlegen.
+	server.add('structureData2', data2).done(function (items2) {
+		console.log('Item (structureData2) stored with ID: ' + items2[0].id + '.');
+		// Erhaltene ID von "structureData1" im "structureData1"-Objekt
+		// ablegen.
+		data1.subObj1 = items2[0].id;
+		
+		// "structureData1" anlegen.
+		server.add('structureData1', data1).done(function (items1) {
+			console.log('Item (structureData1) stored with ID: ' + items1[0].id + '.');
+			
+			// "structureData3" anlegen.
+			server.add('structureData3', data3).done(function (items3) {
+				console.log('Item (structureData3) stored with ID: ' + items3[0].id + '.');
+				// Zwischengespeicherte ID von "structureData1" im 
+				// "structureData13"-Objekt ablegen. 
+				data13.obj1 = data1.id;
+				// Erhaltene ID von "structureData3" im 
+				// "structureData13"-Objekt ablegen. 
+				data13.subObj3 = items3[0].id;
+				
+				// "structureData13" anlegen.
+				server.add('zStructureData13', data13).done(function (items13) {
+					console.log('Item (zStructureData13) stored with ID: ' + items13[0].id + '.');
+					// Wenn letzter Aufruf erreicht und abgeschlossen,
+					// benötigte Zeit auf Konsole ausgeben und
+					// Ansicht über "dbFindAll" aktualisieren.
+					//if (i == (n-1) && n != 1) {
+					if (i == (n-1)) {
+						console.timeEnd('dbAdd');
+						dbFindAll('structureData1');
+					}
+					// Wenn nur 1 Einfügung stattgefunden hat,
+					// ebenfalls Ansicht über "dbFindAll" aktualisieren.
+					if (n == 1) {
+						dbFindAll('structureData1');
+					}
+				});
+			});
+		});
+	});
+};
+
+/**
  * Löscht ein Element persistent aus der Datenbank.
  * 
  * Der Datentyp wird über die Variable "typ" übergeben,
@@ -259,6 +320,9 @@ var dbFindAll = function (typ) {
 	console.time('dbFindAll');
 	server.query(typ).filter().execute().done(function (items) {
 		$('#mainContent tbody').html('');
+		if (items.length == 0) {
+			$('#mainContent tbody').html('<tr><td colspan="7"><i>Keine Einträge vorhanden</i></td></tr>');
+		}
 		$.each(items, function (key, value) {
 			$('#mainContent tbody').append('<tr> \
 					<td>' + value.id + '</td> \
@@ -384,7 +448,7 @@ $('#menuBigData').bind('click', function () {
 	handleClick('bigData', $(this));
 });
 $('#menuStructureData').bind('click', function () {
-	handleClick('structureData', $(this));
+	handleClick('structureData1', $(this));
 });
 $('#menuStructureDataOO').bind('click', function () {
 	handleClick('structureDataOO', $(this));
@@ -487,20 +551,48 @@ var structureDataOOAdd = function (i, n) {
  * @param Integer i
  * @param Integer n
  */
-var structureData1Add = function (i, n) {
+var structureDataAdd = function (i, n) {
 	var time = new Date();
 	
-	var data = {
+	var data1 = {
 		serverId: null,
 		content: 'ABCDEFGHI',
-		subObj1: subObj1,
+		subObj1: 0,
 		deleted: 0,
 		sync: false,
 		createdAt: time,
 		updatedAt: time
 	};
 	
-	dbAdd('structureData1', data, i, n);
+	var data2 = {
+		serverId: null,
+		content: 'ABCDEFGHI',
+		deleted: 0,
+		sync: false,
+		createdAt: time,
+		updatedAt: time
+	};
+	
+	var data3 = {
+		serverId: null,
+		content: 'ABCDEFGHI',
+		deleted: 0,
+		sync: false,
+		createdAt: time,
+		updatedAt: time	
+	};
+	
+	var data13 = {
+		serverId: null,
+		obj1: 0,
+		subObj3: 0,
+		deleted: 0,
+		sync: false,
+		createdAt: time,
+		updatedAt: time	
+	};
+	
+	dbAdd2(data1, data2, data3, data13, i, n);
 };
 
 /**
@@ -540,6 +632,8 @@ var addListener = function (typ) {
 			bigDataAdd(1, 1);
 		} else if (typ == 'structureDataOO') {
 			structureDataOOAdd(1, 1);
+		} else if (typ == 'structureData1') {
+			structureDataAdd(1, 1);
 		}
 	});
 	
@@ -561,6 +655,10 @@ var addListener = function (typ) {
 		} else if (typ == 'structureDataOO') {
 			for (var i = 0; i < 1000; i++) {
 				structureDataOOAdd(i, 1000);
+			}
+		} else if (typ == 'structureData1') {
+			for (var i = 0; i < 1000; i++) {
+				structureDataAdd(i, 1000);
 			}
 		}
 	});

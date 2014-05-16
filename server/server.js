@@ -3,7 +3,9 @@ require('./db');
 // Datenbank-Objekt erstellen
 var mongoose = require('mongoose');
 
-var SmallData = mongoose.model('smallData');
+var SmallData		= mongoose.model('smallData');
+var BigData			= mongoose.model('bigData');
+var StructureDataOO	= mongoose.model('structureDataOO');
 
 // Port auf dem socket.io lauschen soll.
 var PORT = 3700;
@@ -11,6 +13,42 @@ var PORT = 3700;
 
 // socket.io-Objekt erstellen
 var io = require('socket.io').listen(PORT);
+
+/**
+ * BEGIN Helper Funktionen
+ */
+var syncDownAll = function (obj, typ) {
+	obj.find().exec(function (err, items) {
+		if (err) {
+			return console.error(err);
+		}
+		for (var i = 0; i < items.length; i++) {
+			socket.emit('sync-down-single', {
+				typ: typ,
+				data: items[i],
+				serverId: items[i]._id
+			});
+		}
+	});
+};
+
+var syncDownNewer = function (obj, typ, lastSync) {
+	obj.find().where('updatedAt').gt(lastSync).exec(function (err, items) {
+		if (err) {
+			return console.error(err);
+		}
+		for (var i = 0; i < items.length; i++) {
+			socket.emit('sync-down-single', {
+				typ: typ,
+				data: items[i],
+				serverId: items[i]._id
+			});
+		}
+	});
+};
+/**
+ * END Helper Funktionen
+ */
 
 
 io.sockets.on('connection', function (socket) {
@@ -24,28 +62,19 @@ io.sockets.on('connection', function (socket) {
 		console.log(data);
 		if (data.lastSync == null) {
 			// Es muessen alle Daten ubermittelt werden.
+			
 			// smallData
-			SmallData.find().exec(function (err, smallDatas) {
-				if (err) {
-					return console.error(err);
-				}
-				for (var i = 0; i < smallDatas.length; i++) {
-					socket.emit('sync-down-single', {
-						typ: 'smallData',
-						data: smallDatas[i],
-						serverId: smallDatas[i]._id
-					});
-				}
-			});
+			syncDownAll(SmallData, 'smallData');
+			// bigData
+			syncDownAll(BigData, 'bigData');
 		} else {
 			// Es muessen nur Daten, die neuer als lastSync
 			// sind uebermittelt werden.
-			/*SmallData.find().where('updatedAt').gt(data.lastSync).exec(function (err, smallDatas) {
-				if (err) {
-					return console.error(err);
-				}
-				console.log(smallDatas);
-			});*/
+			
+			// smallData
+			syncDownNewer(SmallData, 'smallData');
+			// bigData
+			syncDownNewer(BigData, 'bigData');
 		}
 	});
 	
@@ -54,11 +83,15 @@ io.sockets.on('connection', function (socket) {
 	});
 	
 	socket.on('sync-up-single', function (data) {
+		var obj;
 		if (data.typ == 'smallData') {
-			var obj = new SmallData(data.data);
+			obj = new SmallData(data.data);
+		} else if(data.typ == 'bigData') {
+			obj = new BigData(data.data);
+		} else if(data.typ == 'structureDataOO') {
+			obj = new StructureDataOO(data.data);
 		} else {
-			console.error('Unknown Object Typ');
-			obj = null;
+			return console.error('Unknown Object Typ');
 		}
 		
 		obj.save(function(err, obj) {
