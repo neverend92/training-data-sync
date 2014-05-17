@@ -399,6 +399,7 @@ socket.on('connecting', function () {
 	console.log('Verbindung zum Server wird aufgebaut...');
 });
 
+var tempClientData = {};
 // Binding fuer die abgeschlossene Verbindungsherstellung
 socket.on('connect', function () {
 	$('#socketStatus').html(socketStatus.online);
@@ -406,13 +407,20 @@ socket.on('connect', function () {
 	
 	// Element ermitteln, die nicht synchronisiert sind.
 	// Dabei sind ALLE Datentypen zu durchlaufen.
-	server.query('smallData').filter('sync', false).execute().done(function (items) {
-		console.log(items);
+	server.query('smallData').filter('sync', false).execute().done(function (items1) {
+		tempClientData.smallData = items1;
+		server.query('bigData').filter('sync', false).execute().done(function (items2) {
+			tempClientData.bigData = items2;
+			server.query('structureDataOO').filter('sync', false).execute().done(function (items3) {
+				tempClientData.structureDataOO = items3;
+				tempClientData.lastSync = localStorage.getItem('last-sync');
+				console.log(tempClientData);
+				socket.emit('sync-down', tempClientData);
+			});
+		});
 	});
 	
-	socket.emit('sync-down', {
-		lastSync: localStorage.getItem('last-sync')
-	});
+	
 });
 
 // Binding fuer die Verbindungstrennung
@@ -425,13 +433,51 @@ socket.on('sync-down-ok', function (data) {
 	console.log(data);
 });
 socket.on('sync-up-single-ok', function (data) {
-	server.query(data.typ).filter('id', data.id).modify({serverId: data.serverId, sync: true}).execute().done(function (items) {
+	var time = new Date();
+	server.query(data.typ).filter('id', data.id).modify({serverId: data.serverId, sync: true, updatedAt: time}).execute().done(function (items) {
 		console.log('Item (' + typ + ') with ID: ' + items[0].id + ' synced.');
 		localStorage.setItem('last-sync', new Date());
 	});
 });
 socket.on('sync-down-single', function (data) {
-	//App.__container__.lookup('controller:' + data.typ + 's').send('syncDownOne', data);
+	console.log(data);
+	var time = new Date();
+	server.query(data.typ).filter('serverId', data.serverId).modify({sync: true, updatedAt: time}).execute().done(function (items) {
+		if (items.length == 0) {
+			if (data.typ == 'smallData') {
+				newData = {
+					content: data.data.content,
+					deleted: data.data.deleted,
+					createdAt: data.data.createdAt,
+					updatedAt: data.data.updatedAt,
+				};
+			} else if (data.typ == 'bigData') {
+				newData = {
+					content: data.data.content,
+					blob: data.data.blob,
+					deleted: data.data.deleted,
+					createdAt: data.data.createdAt,
+					updatedAt: data.data.updatedAt,
+				};
+			} else if (data.typ == 'structureDataOO') {
+				newData = {
+					content: data.data.content,
+					subObj1: data.data.subObj1,
+					subObj2: data.data.subObj2,
+					deleted: data.data.deleted,
+					createdAt: data.data.createdAt,
+					updatedAt: data.data.updatedAt,
+				};
+			}
+			server.add(data.typ, newData).done(function (items) {
+				console.log('Item (' + data.typ + ') with ID: ' + items[0].id + ' synced.');
+				localStorage.setItem('last-sync', new Date());
+			});
+		} else {
+			console.log('Item (' + typ + ') with ID: ' + items[0].id + ' synced.');
+			localStorage.setItem('last-sync', new Date());
+		}
+	});
 });
 /**
  * END Verbindung zum Socket

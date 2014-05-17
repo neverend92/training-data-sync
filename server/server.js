@@ -17,7 +17,7 @@ var io = require('socket.io').listen(PORT);
 /**
  * BEGIN Helper Funktionen
  */
-var syncDownAll = function (obj, typ) {
+var syncDownAll = function (socket, obj, typ) {
 	obj.find().exec(function (err, items) {
 		if (err) {
 			return console.error(err);
@@ -32,7 +32,7 @@ var syncDownAll = function (obj, typ) {
 	});
 };
 
-var syncDownNewer = function (obj, typ, lastSync) {
+var syncDownNewer = function (socket, obj, typ, lastSync) {
 	obj.find().where('updatedAt').gt(lastSync).exec(function (err, items) {
 		if (err) {
 			return console.error(err);
@@ -45,6 +45,39 @@ var syncDownNewer = function (obj, typ, lastSync) {
 			});
 		}
 	});
+};
+
+var handleClientData = function (data, obj, typ) {
+	for (var i = 0; i < data.length; i++) {
+		if (data[i].serverId == null) {
+			// neues Objekt anlegen.
+			// Sync ok
+		} else {
+			// Element per ServerId ermitteln.
+			obj.find().where('serverId').equals(data[i].serverId).exec(function (err, items) {
+				if (err) {
+					return console.error(err);
+				}
+				if (items[0].updatedAt >= data[i].updatedAt) {
+					// Server-Objekt neuer, dieses wird behalten.
+					// Betrifft nur anfragenden Client, da an Server nichts geändert wird.
+					socket.emit('sync-down-single', {
+						typ: typ,
+						data: items[i],
+						serverId: items[i]._id
+					});
+				} else {
+					// Client-Objekt neuer, dieses wird behalten.
+					// Daten auf Server werden geändert, deshalb ist anschließend
+					// Broadcast notwendig.
+					obj.update({_id: data[i].serverId}, data[i].data, function (err, items) {
+						console.log('updated Server-Element');
+						console.log(items[0]);
+					});
+				}
+			});
+		}
+	}
 };
 /**
  * END Helper Funktionen
@@ -59,22 +92,33 @@ io.sockets.on('connection', function (socket) {
 	// zu erhalten.
 	// Dabei ist die Angabe des letzten Sync-Zeitpunkts notwendig.
 	socket.on('sync-down', function (data) {
-		console.log(data);
+		console.log(data.lastSync);
 		if (data.lastSync == null) {
 			// Es muessen alle Daten ubermittelt werden.
 			
 			// smallData
-			syncDownAll(SmallData, 'smallData');
+			syncDownAll(socket, SmallData, 'smallData');
 			// bigData
-			syncDownAll(BigData, 'bigData');
+			syncDownAll(socket, BigData, 'bigData');
 		} else {
 			// Es muessen nur Daten, die neuer als lastSync
 			// sind uebermittelt werden.
 			
 			// smallData
-			syncDownNewer(SmallData, 'smallData');
+			syncDownNewer(socket, SmallData, 'smallData', data.lastSync);
 			// bigData
-			syncDownNewer(BigData, 'bigData');
+			syncDownNewer(socket, BigData, 'bigData', data.lastSync);
+		}
+		
+		// Daten von Client verarbeiten.
+		if (data.smallData.length > 0) {
+			handleClientData(data.smallData, SmallData, 'smallData');
+		}
+		if (data.bigData.length > 0) {
+			handleClientData(data.bigData, BigData, 'bigData');
+		}
+		if (data.structureDataOO.length > 0) {
+			handleClientData(data.structureDataOO, StructureDataOO, 'structureDataOO');
 		}
 	});
 	
