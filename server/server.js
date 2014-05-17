@@ -17,7 +17,7 @@ var io = require('socket.io').listen(PORT);
 /**
  * BEGIN Helper Funktionen
  */
-var syncDownAll = function (socket, obj, typ) {
+var syncDownAll = function (socket, obj, typ, data) {
 	obj.find().exec(function (err, items) {
 		if (err) {
 			return console.error(err);
@@ -29,14 +29,16 @@ var syncDownAll = function (socket, obj, typ) {
 				serverId: items[i]._id
 			});
 		}
+		handleClientData(socket, obj, typ, data);
 	});
 };
 
-var syncDownNewer = function (socket, obj, typ, lastSync) {
-	obj.find().where('updatedAt').gt(lastSync).exec(function (err, items) {
+var syncDownNewer = function (socket, obj, typ, data) {
+	obj.find().where('updatedAt').gt(data.lastSync).exec(function (err, items) {
 		if (err) {
 			return console.error(err);
 		}
+		console.log(items);
 		for (var i = 0; i < items.length; i++) {
 			socket.emit('sync-down-single', {
 				typ: typ,
@@ -44,39 +46,77 @@ var syncDownNewer = function (socket, obj, typ, lastSync) {
 				serverId: items[i]._id
 			});
 		}
+		handleClientData(socket, obj, typ, data);
 	});
 };
-
-var handleClientData = function (data, obj, typ) {
-	for (var i = 0; i < data.length; i++) {
-		if (data[i].serverId == null) {
-			// neues Objekt anlegen.
-			// Sync ok
-		} else {
-			// Element per ServerId ermitteln.
-			obj.find().where('serverId').equals(data[i].serverId).exec(function (err, items) {
-				if (err) {
-					return console.error(err);
-				}
-				if (items[0].updatedAt >= data[i].updatedAt) {
-					// Server-Objekt neuer, dieses wird behalten.
-					// Betrifft nur anfragenden Client, da an Server nichts geändert wird.
-					socket.emit('sync-down-single', {
-						typ: typ,
-						data: items[i],
-						serverId: items[i]._id
-					});
-				} else {
-					// Client-Objekt neuer, dieses wird behalten.
-					// Daten auf Server werden geändert, deshalb ist anschließend
-					// Broadcast notwendig.
-					obj.update({_id: data[i].serverId}, data[i].data, function (err, items) {
-						console.log('updated Server-Element');
-						console.log(items[0]);
-					});
-				}
-			});
+ 
+var handleClientData = function (socket, data, obj, typ) {
+	// Daten von Client verarbeiten.
+	if (data.smallData.length > 0) {
+		console.log('handle smallData');
+		for (var i = 0; i < data.smallData.length; i++) {
+			handleClientDataSingle(socket, data.smallData, SmallData, 'smallData');
 		}
+	}
+	if (data.bigData.length > 0) {
+		console.log('handle bigData');
+		for (var i = 0; i < data.bigData.length; i++) {
+			handleClientDataSingle(socket, data.bigData, BigData, 'bigData');
+		}
+	}
+	if (data.structureDataOO.length > 0) {
+		console.log('handle structureDataOO');
+		for (var i = 0; i < data.structureDataOO.length; i++) {
+			handleClientDataSingle(socket, data.structureDataOO, StructureDataOO, 'structureDataOO');
+		}
+	}
+};
+
+var handleClientDataSingle = function (socket, data, obj, typ) {
+	
+	if (data.serverId == null) {
+		// neues Objekt anlegen.
+		// Sync ok
+		var tmp = new obj(data);
+		tmp.save(function(err, items) {
+			if (err) {
+				return console.error(err);
+			}
+			socket.emit('sync-up-single-ok', {
+				typ: typ,
+				id: data.id,
+				serverId: items._id,
+			});
+			socket.broadcast.emit('sync-down-single', {
+				typ: typ,
+				data: data,
+				serverId: items._id,
+			});
+		});
+	} else {
+		// Element per ServerId ermitteln.
+		obj.find().where('serverId').equals(data.serverId).exec(function (err, items) {
+			if (err) {
+				return console.error(err);
+			}
+			if (items[0].updatedAt >= data.updatedAt) {
+				// Server-Objekt neuer, dieses wird behalten.
+				// Betrifft nur anfragenden Client, da an Server nichts geändert wird.
+				socket.emit('sync-down-single', {
+					typ: typ,
+					data: items[0],
+					serverId: items[0]._id
+				});
+			} else {
+				// Client-Objekt neuer, dieses wird behalten.
+				// Daten auf Server werden geändert, deshalb ist anschließend
+				// Broadcast notwendig.
+				obj.update({_id: data.serverId}, data, function (err, items) {
+					console.log('updated Server-Element');
+					console.log(items[0]);
+				});
+			}
+		});
 	}
 };
 /**
@@ -97,28 +137,17 @@ io.sockets.on('connection', function (socket) {
 			// Es muessen alle Daten ubermittelt werden.
 			
 			// smallData
-			syncDownAll(socket, SmallData, 'smallData');
+			syncDownAll(socket, SmallData, 'smallData', data);
 			// bigData
-			syncDownAll(socket, BigData, 'bigData');
+			syncDownAll(socket, BigData, 'bigData', data);
 		} else {
 			// Es muessen nur Daten, die neuer als lastSync
 			// sind uebermittelt werden.
 			
 			// smallData
-			syncDownNewer(socket, SmallData, 'smallData', data.lastSync);
+			syncDownNewer(socket, SmallData, 'smallData', data);
 			// bigData
-			syncDownNewer(socket, BigData, 'bigData', data.lastSync);
-		}
-		
-		// Daten von Client verarbeiten.
-		if (data.smallData.length > 0) {
-			handleClientData(data.smallData, SmallData, 'smallData');
-		}
-		if (data.bigData.length > 0) {
-			handleClientData(data.bigData, BigData, 'bigData');
-		}
-		if (data.structureDataOO.length > 0) {
-			handleClientData(data.structureDataOO, StructureDataOO, 'structureDataOO');
+			syncDownNewer(socket, BigData, 'bigData', data);
 		}
 	});
 	

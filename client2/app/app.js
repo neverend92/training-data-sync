@@ -433,9 +433,10 @@ socket.on('sync-down-ok', function (data) {
 	console.log(data);
 });
 socket.on('sync-up-single-ok', function (data) {
+	console.log(data);
 	var time = new Date();
 	server.query(data.typ).filter('id', data.id).modify({serverId: data.serverId, sync: true, updatedAt: time}).execute().done(function (items) {
-		console.log('Item (' + typ + ') with ID: ' + items[0].id + ' synced.');
+		console.log('Item (' + data.typ + ') with ID: ' + items[0].id + ' synced.');
 		localStorage.setItem('last-sync', new Date());
 	});
 });
