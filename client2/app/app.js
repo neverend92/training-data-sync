@@ -429,9 +429,6 @@ socket.on('disconnect', function () {
 	console.log('Verbindung zum Server getrennt.');
 });
 
-socket.on('sync-down-ok', function (data) {
-	console.log(data);
-});
 socket.on('sync-up-single-ok', function (data) {
 	console.log(data);
 	var time = new Date();
@@ -475,7 +472,7 @@ socket.on('sync-down-single', function (data) {
 				localStorage.setItem('last-sync', new Date());
 			});
 		} else {
-			console.log('Item (' + typ + ') with ID: ' + items[0].id + ' synced.');
+			console.log('Item (' + data.typ + ') with ID: ' + items[0].id + ' synced.');
 			localStorage.setItem('last-sync', new Date());
 		}
 	});

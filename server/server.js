@@ -29,7 +29,7 @@ var syncDownAll = function (socket, obj, typ, data) {
 				serverId: items[i]._id
 			});
 		}
-		handleClientData(socket, obj, typ, data);
+		handleClientData(socket, data, obj, typ);
 	});
 };
 
@@ -38,7 +38,6 @@ var syncDownNewer = function (socket, obj, typ, data) {
 		if (err) {
 			return console.error(err);
 		}
-		console.log(items);
 		for (var i = 0; i < items.length; i++) {
 			socket.emit('sync-down-single', {
 				typ: typ,
@@ -46,34 +45,33 @@ var syncDownNewer = function (socket, obj, typ, data) {
 				serverId: items[i]._id
 			});
 		}
-		handleClientData(socket, obj, typ, data);
+		handleClientData(socket, data, obj, typ);
 	});
 };
  
 var handleClientData = function (socket, data, obj, typ) {
 	// Daten von Client verarbeiten.
-	if (data.smallData.length > 0) {
+	if (typ == 'smallData' && data.smallData.length > 0) {
 		console.log('handle smallData');
 		for (var i = 0; i < data.smallData.length; i++) {
-			handleClientDataSingle(socket, data.smallData, SmallData, 'smallData');
+			handleClientDataSingle(socket, data.smallData[i], SmallData, typ);
 		}
 	}
-	if (data.bigData.length > 0) {
+	if (typ == 'bigData' && data.bigData.length > 0) {
 		console.log('handle bigData');
 		for (var i = 0; i < data.bigData.length; i++) {
-			handleClientDataSingle(socket, data.bigData, BigData, 'bigData');
+			handleClientDataSingle(socket, data.bigData[i], BigData, typ);
 		}
 	}
-	if (data.structureDataOO.length > 0) {
+	if (typ == 'structureDataOO' && data.structureDataOO.length > 0) {
 		console.log('handle structureDataOO');
 		for (var i = 0; i < data.structureDataOO.length; i++) {
-			handleClientDataSingle(socket, data.structureDataOO, StructureDataOO, 'structureDataOO');
+			handleClientDataSingle(socket, data.structureDataOO[i], StructureDataOO, typ);
 		}
 	}
 };
 
 var handleClientDataSingle = function (socket, data, obj, typ) {
-	
 	if (data.serverId == null) {
 		// neues Objekt anlegen.
 		// Sync ok
