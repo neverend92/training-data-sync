@@ -138,6 +138,8 @@ io.sockets.on('connection', function (socket) {
 			syncDownAll(socket, SmallData, 'smallData', data);
 			// bigData
 			syncDownAll(socket, BigData, 'bigData', data);
+			// structureDataOO
+			syncDownAll(socket, StructureDataOO, 'structureDataOO', data);
 		} else {
 			// Es muessen nur Daten, die neuer als lastSync
 			// sind uebermittelt werden.
@@ -146,6 +148,8 @@ io.sockets.on('connection', function (socket) {
 			syncDownNewer(socket, SmallData, 'smallData', data);
 			// bigData
 			syncDownNewer(socket, BigData, 'bigData', data);
+			// structureDataOO
+			syncDownNewer(socket, StructureDataOO, 'structureDataOO', data);
 		}
 	});
 	

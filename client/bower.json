@@ -12,14 +12,13 @@
     "**/.*",
     "node_modules",
     "bower_components",
+    "vendor",
     "test",
     "tests"
   ],
   "dependencies": {
-    "bootstrap": "~3.1.1",
-    "ember": "~1.5.1",
-    "ember-data": "~1.0.0-beta.7",
+    "db.js": "~0.9.0",
     "socket.io-client": "~0.9.16",
-    "ember-indexeddb-adapter": "https://github.com/kurko/ember-indexeddb-adapter.git"
+    "bootstrap": "~3.1.1"
   }
 }
