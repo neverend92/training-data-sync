@@ -6,6 +6,10 @@ var mongoose = require('mongoose');
 var SmallData		= mongoose.model('smallData');
 var BigData			= mongoose.model('bigData');
 var StructureDataOO	= mongoose.model('structureDataOO');
+var StructureData1	= mongoose.model('structureData1');
+var StructureData2	= mongoose.model('structureData2');
+var StructureData3	= mongoose.model('structureData3');
+var StructureData13	= mongoose.model('zStructureData13');
 
 // Port auf dem socket.io lauschen soll.
 var PORT = 3700;
@@ -69,6 +73,30 @@ var handleClientData = function (socket, data, obj, typ) {
 			handleClientDataSingle(socket, data.structureDataOO[i], StructureDataOO, typ);
 		}
 	}
+	if (typ == 'structureData1' && data.structureData1.length > 0) {
+		console.log('handle structureData1');
+		for (var i = 0; i < data.structureData1.length; i++) {
+			handleClientDataSingle(socket, data.structureData1[i], StructureData1, typ);
+		}
+	}
+	if (typ == 'structureData2' && data.structureData2.length > 0) {
+		console.log('handle structureData2');
+		for (var i = 0; i < data.structureData2.length; i++) {
+			handleClientDataSingle(socket, data.structureData2[i], StructureData2, typ);
+		}
+	}
+	if (typ == 'structureData3' && data.structureData3.length > 0) {
+		console.log('handle structureData3');
+		for (var i = 0; i < data.structureData3.length; i++) {
+			handleClientDataSingle(socket, data.structureData3[i], StructureData3, typ);
+		}
+	}
+	if (typ == 'zStructureData13' && data.structureData13.length > 0) {
+		console.log('handle zStructureData13');
+		for (var i = 0; i < data.structureData13.length; i++) {
+			handleClientDataSingle(socket, data.structureData13[i], StructureData13, typ);
+		}
+	}
 };
 
 var handleClientDataSingle = function (socket, data, obj, typ) {
@@ -112,6 +140,11 @@ var handleClientDataSingle = function (socket, data, obj, typ) {
 				obj.update({_id: data.serverId}, data, function (err, items) {
 					console.log('updated Server-Element');
 					console.log(items[0]);
+					socket.broadcast.emit('sync-down-single', {
+						typ: typ,
+						data: data,
+						serverId: items._id,
+					});
 				});
 			}
 		});
@@ -140,6 +173,14 @@ io.sockets.on('connection', function (socket) {
 			syncDownAll(socket, BigData, 'bigData', data);
 			// structureDataOO
 			syncDownAll(socket, StructureDataOO, 'structureDataOO', data);
+			// structureData1
+			syncDownAll(socket, StructureData1, 'structureData1', data);
+			// structureData2
+			syncDownAll(socket, StructureData2, 'structureData2', data);
+			// structureData3
+			syncDownAll(socket, StructureData3, 'structureData3', data);
+			// structureData13
+			syncDownAll(socket, StructureData13, 'zStructureData13', data);
 		} else {
 			// Es muessen nur Daten, die neuer als lastSync
 			// sind uebermittelt werden.
@@ -150,21 +191,33 @@ io.sockets.on('connection', function (socket) {
 			syncDownNewer(socket, BigData, 'bigData', data);
 			// structureDataOO
 			syncDownNewer(socket, StructureDataOO, 'structureDataOO', data);
+			// structureData1
+			syncDownNewer(socket, StructureData1, 'structureData1', data);
+			// structureData2
+			syncDownNewer(socket, StructureData2, 'structureData2', data);
+			// structureData3
+			syncDownNewer(socket, StructureData3, 'structureData3', data);
+			// structureData13
+			syncDownNewer(socket, StructureData13, 'zStructureData13', data);
 		}
-	});
-	
-	socket.on('sync-up', function (data) {
-		console.log(data);
 	});
 	
 	socket.on('sync-up-single', function (data) {
 		var obj;
 		if (data.typ == 'smallData') {
 			obj = new SmallData(data.data);
-		} else if(data.typ == 'bigData') {
+		} else if (data.typ == 'bigData') {
 			obj = new BigData(data.data);
-		} else if(data.typ == 'structureDataOO') {
+		} else if (data.typ == 'structureDataOO') {
 			obj = new StructureDataOO(data.data);
+		} else if (data.typ == 'structureData1') {
+			obj = new StructureData1(data.data);
+		} else if (data.typ == 'structureData2') {
+			obj = new StructureData2(data.data);
+		} else if (data.typ == 'structureData3') {
+			obj = new StructureData3(data.data);
+		} else if (data.typ == 'zStructureData13') {
+			obj = new StructureData13(data.data);
 		} else {
 			return console.error('Unknown Object Typ');
 		}

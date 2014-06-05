@@ -33,6 +33,41 @@ mongoose.model('structureDataOO', new mongoose.Schema({
 	createdAt: Date,
 	updatedAt: Date
 }));
+
+mongoose.model('structureData1', new mongoose.Schema({
+	id: Number,
+	content: String,
+	subObj1: Number,
+	deleted: Number,
+	createdAt: Date,
+	updatedAt: Date
+}));
+
+mongoose.model('structureData2', new mongoose.Schema({
+	id: Number,
+	content: String,
+	deleted: Number,
+	createdAt: Date,
+	updatedAt: Date
+}));
+
+mongoose.model('structureData3', new mongoose.Schema({
+	id: Number,
+	content: String,
+	deleted: Number,
+	createdAt: Date,
+	updatedAt: Date
+}));
+
+mongoose.model('zStructureData13', new mongoose.Schema({
+	id: Number,
+	content: String,
+	obj1: Array,
+	subObj3: Array,
+	deleted: Number,
+	createdAt: Date,
+	updatedAt: Date
+}));
 /**
  * BEGIN benötigte Objekte abbilden
  */

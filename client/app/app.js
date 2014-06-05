@@ -26,17 +26,10 @@ console.log('DEBUG: Log <settings>-Object: ' , settings);
 /**
  * BEGIN Helper Funktionen
  */
-var randomString = function (length) {
-	var text = "";
-	var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstvwxyz0123456789";
-	
-	for (var i = 0; i < length; i++) {
-		text += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-	}
-	
-	return text;
-};
-
+/**
+ * Generiert eine 5MB großen String (5242880 Zeichen)
+ * @return String
+ */
 var randomBlob = function () {
 	var text = "";
 	var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstvwxyz0123456789";
@@ -73,7 +66,7 @@ db.open({
 	server: 'training-data-sync',
 	// Version der Datenbank, muss bei strukturellen Änderungen
 	// erhöht werden.
-	version: 3,
+	version: 4,
 	// Datenbank-Schema, ist flexibel
 	// Lediglich Key und AutoIncrement müssen angegeben werden.
 	schema: {
@@ -301,7 +294,12 @@ var dbRemove = function (typ, id) {
  * @param Integer n
  */
 var dbDelete = function (typ, id, i, n) {
-	server.query(typ).filter('id', id).modify({deleted: 1, sync: false, updatedAt: new Date()}).execute().done(function (items) {
+	var modify = {
+		deleted: 1, 
+		sync: false, 
+		updatedAt: new Date(),
+	};
+	server.query(typ).filter('id', id).modify(modify).execute().done(function (items) {
 		/**
 		 * @TODO:
 		 * Änderungen an Server senden.
@@ -445,7 +443,7 @@ socket.on('connect', function () {
 						tempClientData.structureData2 = items5;
 						server.query('structureData3').filter('sync', false).execute().done(function (items6) {
 							tempClientData.structureData3 = items6;
-							server.query('structureData13').filter('sync', false).execute().done(function (items7) {
+							server.query('zStructureData13').filter('sync', false).execute().done(function (items7) {
 								tempClientData.structureData13 = items7;
 								tempClientData.lastSync = localStorage.getItem('last-sync');
 								console.log(tempClientData);
@@ -734,12 +732,12 @@ var addListener = function (typ) {
 				bigDataAdd(i, 10);
 			}
 		} else if (typ == 'structureDataOO') {
-			for (var i = 0; i < 1000; i++) {
-				structureDataOOAdd(i, 1000);
+			for (var i = 0; i < 100; i++) {
+				structureDataOOAdd(i, 100);
 			}
 		} else if (typ == 'structureData1') {
-			for (var i = 0; i < 1000; i++) {
-				structureDataAdd(i, 1000);
+			for (var i = 0; i < 100; i++) {
+				structureDataAdd(i, 100);
 			}
 		}
 	});
