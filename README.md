@@ -9,8 +9,7 @@ Diese Anwendung entsteht im Rahmen einer Bachelorarbeit mit dem Thema *Eine Fall
 ## Verwendete Technologien
 ### Client
 * [IndexedDB](http://www.w3.org/TR/IndexedDB/) (Datenbank)
-* [db.js](http://aaronpowell.github.io/db.js/) (Wrapper fÃ¼r IndexedDB)
-* [ember.js](http://emberjs.com/) (Framework)
+* [db.js](http://aaronpowell.github.io/db.js/) (Wrapper für IndexedDB)
 * [socket.io](http://socket.io/) (Server-Verbindung)
 
 ### Server
@@ -19,6 +18,7 @@ Diese Anwendung entsteht im Rahmen einer Bachelorarbeit mit dem Thema *Eine Fall
 * [mongoose](http://mongoosejs.com/) (Wrapper fÃ¼r MongoDB)
 * [socket.io](http://socket.io/) (Server-Verbindung)
 
-## Funktionsweise
-Die Anwendung wird zunÃ¤chst CRUD-Applikation erstellt (Create, Read, Update, Delete). Jedes in der Anwendung vorkommende Objekt ist komplett Ã¼ber eine OberflÃ¤che verwaltbar.
-SpÃ¤ter werden diese erstellten Grundfunktionen dazu verwendet Leistungstest auf die Anwednung/Datenbank durchzufÃ¼hren, es werden Ã¼ber einen seperaten Teil der Anwendung mehrere Objekte auf einmal modifiziert und die Performance dabei bestimmt.
+## Zusammenfassung
+Die aktuellen Webtechnologien ermöglichen das Erstellen von immer komplexeren Webanwendungen. Diese Webapplikationen verarbeiten meist eine Vielzahl von Datensätzen und speichern diese persistent in einer Datenbank auf Server-Seite. Dabei besteht jedoch der Bedarf nach einer Möglichkeit diese Applikationen auch offline nutzen zu können. Somit müssen diese Datensätze offline in einer Datenbank vorgehalten werden.
+
+Im Rahmen dieser Arbeit werden die in den Browser zu Verfügung gestellten Möglichkeiten evaluiert und hinsichtlich ihrer Einsetzbarkeit untersucht. Abschließend wird die Technologie IndexedDB, eine im Browser integrierte Datenbank, hinsichtlich ihrer Leistungsfähigkeit untersucht. Dabei wird mit Hilfe einer Fallstudie versucht die jeweiligen Leistungsgrenzen in den aktuellen Browsern und herauszuarbeiten.
