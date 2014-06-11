@@ -460,11 +460,13 @@ socket.on('connect', function () {
 });
 
 // Binding fuer die Verbindungstrennung
+// socket-Ereignis "disconnect"
 socket.on('disconnect', function () {
 	$('#socketStatus').html(socketStatus.offline);
 	console.log('Verbindung zum Server getrennt.');
 });
 
+// socket-Ereignis "sync-up-single-ok"
 socket.on('sync-up-single-ok', function (data) {
 	console.log(data);
 	var time = new Date();
@@ -474,11 +476,14 @@ socket.on('sync-up-single-ok', function (data) {
 	});
 });
 
+// socket-Ergeinis "sync-down-single".
 socket.on('sync-down-single', function (data) {
 	console.log(data);
 	var time = new Date();
 	server.query(data.typ).filter('serverId', data.serverId).modify({sync: true, updatedAt: time}).execute().done(function (items) {
+		// Prüfen, ob Elemente gefunden wurden.
 		if (items.length == 0) {
+			// Einzelne Datentypen durchlaufen.
 			if (data.typ == 'smallData') {
 				newData = {
 					content: data.data.content,
@@ -535,12 +540,15 @@ socket.on('sync-down-single', function (data) {
 					updatedAt: data.data.updatedAt,
 				};
 			}
+			// Eintrag anlegen.
 			server.add(data.typ, newData).done(function (items) {
 				console.log('Item (' + data.typ + ') with ID: ' + items[0].id + ' synced.');
+				// Aktualisieren des letzten Sync-Zeitpunkts
 				localStorage.setItem('last-sync', new Date());
 			});
 		} else {
 			console.log('Item (' + data.typ + ') with ID: ' + items[0].id + ' synced.');
+			// Aktualisieren des letzten Sync-Zeitpunkts
 			localStorage.setItem('last-sync', new Date());
 		}
 	});

@@ -146,11 +146,13 @@ var handleClientDataSingle = function (socket, data, obj, typ) {
 			if (err) {
 				return console.error(err);
 			}
+			// Antwort an Sender senden.
 			socket.emit('sync-up-single-ok', {
 				typ: typ,
 				id: data.id,
 				serverId: items._id,
 			});
+			// Broadcast an alle außer Sender.
 			socket.broadcast.emit('sync-down-single', {
 				typ: typ,
 				data: data,
@@ -178,6 +180,7 @@ var handleClientDataSingle = function (socket, data, obj, typ) {
 				obj.update({_id: data.serverId}, data, function (err, items) {
 					console.log('updated Server-Element');
 					console.log(items[0]);
+					// socket-Ereignis aussenden, an alle außer Sender.
 					socket.broadcast.emit('sync-down-single', {
 						typ: typ,
 						data: data,
