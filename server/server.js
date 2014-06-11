@@ -3,6 +3,7 @@ require('./db');
 // Datenbank-Objekt erstellen
 var mongoose = require('mongoose');
 
+// Mongoose-Models laden.
 var SmallData		= mongoose.model('smallData');
 var BigData			= mongoose.model('bigData');
 var StructureDataOO	= mongoose.model('structureDataOO');
@@ -21,6 +22,15 @@ var io = require('socket.io').listen(PORT);
 /**
  * BEGIN Helper Funktionen
  */
+/**
+ * Die Funktion syncDownAll ermittelt alle Elemente
+ * des übergebenen Datentyps.
+ * 
+ * @param socket
+ * @param obj
+ * @param typ
+ * @param data
+ */
 var syncDownAll = function (socket, obj, typ, data) {
 	obj.find().exec(function (err, items) {
 		if (err) {
@@ -37,6 +47,16 @@ var syncDownAll = function (socket, obj, typ, data) {
 	});
 };
 
+/**
+ * Die Funktion syncDownNewer ermittelt alle Elemente
+ * des übergebenen Datentyps, die neuer als der übergebene
+ * Zeitpunkt sind.
+ * 
+ * @param socket
+ * @param obj
+ * @param typ
+ * @param data
+ */
 var syncDownNewer = function (socket, obj, typ, data) {
 	obj.find().where('updatedAt').gt(data.lastSync).exec(function (err, items) {
 		if (err) {
@@ -52,7 +72,16 @@ var syncDownNewer = function (socket, obj, typ, data) {
 		handleClientData(socket, data, obj, typ);
 	});
 };
- 
+
+/**
+ * Die Funktion handleClientData verarbeitet die vom Client
+ * gesendeten Daten.
+ * 
+ * @param socket
+ * @param data
+ * @param obj
+ * @param typ
+ */
 var handleClientData = function (socket, data, obj, typ) {
 	// Daten von Client verarbeiten.
 	if (typ == 'smallData' && data.smallData.length > 0) {
@@ -99,6 +128,15 @@ var handleClientData = function (socket, data, obj, typ) {
 	}
 };
 
+/**
+ * Die Funktion handleClientDataSingle verarbeitet einen
+ * einzelnen Datensatz, der vom Client übermittelten Daten
+ * 
+ * @param socket
+ * @param data
+ * @param obj
+ * @param typ
+ */
 var handleClientDataSingle = function (socket, data, obj, typ) {
 	if (data.serverId == null) {
 		// neues Objekt anlegen.
@@ -154,11 +192,10 @@ var handleClientDataSingle = function (socket, data, obj, typ) {
  * END Helper Funktionen
  */
 
-
+/**
+ * BEGIN socket-Events
+ */
 io.sockets.on('connection', function (socket) {
-	/**
-	 * BEGIN Serverdaten an Client senden.
-	 */
 	// Anforderung eines Clients, den aktuellen Datenbestand
 	// zu erhalten.
 	// Dabei ist die Angabe des letzten Sync-Zeitpunkts notwendig.
@@ -238,7 +275,7 @@ io.sockets.on('connection', function (socket) {
 			});
 		});
 	});
-	/**
-	 * END Serverdaten an Client senden.
-	 */
 });
+/**
+ * END socket-Events
+ */

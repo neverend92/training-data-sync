@@ -473,6 +473,7 @@ socket.on('sync-up-single-ok', function (data) {
 		localStorage.setItem('last-sync', new Date());
 	});
 });
+
 socket.on('sync-down-single', function (data) {
 	console.log(data);
 	var time = new Date();
@@ -498,6 +499,37 @@ socket.on('sync-down-single', function (data) {
 					content: data.data.content,
 					subObj1: data.data.subObj1,
 					subObj2: data.data.subObj2,
+					deleted: data.data.deleted,
+					createdAt: data.data.createdAt,
+					updatedAt: data.data.updatedAt,
+				};
+			} else if (data.typ == 'structureData1') {
+				newData = {
+					content: data.data.content,
+					subObj1: data.data.subObj1,
+					deleted: data.data.deleted,
+					createdAt: data.data.createdAt,
+					updatedAt: data.data.updatedAt,
+				};
+			} else if (data.typ == 'structureData2') {
+				newData = {
+					content: data.data.content,
+					deleted: data.data.deleted,
+					createdAt: data.data.createdAt,
+					updatedAt: data.data.updatedAt,
+				};
+			} else if (data.typ == 'structureData3') {
+				newData = {
+					content: data.data.content,
+					deleted: data.data.deleted,
+					createdAt: data.data.createdAt,
+					updatedAt: data.data.updatedAt,
+				};
+			} else if (data.typ == 'zStructureData13') {
+				newData = {
+					content: data.data.content,
+					obj1: data.data.obj1,
+					subObj3: data.data.subObj3,
 					deleted: data.data.deleted,
 					createdAt: data.data.createdAt,
 					updatedAt: data.data.updatedAt,
@@ -634,6 +666,7 @@ var structureDataOOAdd = function (i, n) {
 var structureDataAdd = function (i, n) {
 	var time = new Date();
 	
+	// structureData1
 	var data1 = {
 		serverId: null,
 		content: 'ABCDEFGHI',
@@ -644,6 +677,7 @@ var structureDataAdd = function (i, n) {
 		updatedAt: time
 	};
 	
+	// structureData2
 	var data2 = {
 		serverId: null,
 		content: 'ABCDEFGHI',
@@ -653,6 +687,7 @@ var structureDataAdd = function (i, n) {
 		updatedAt: time
 	};
 	
+	// structureData3
 	var data3 = {
 		serverId: null,
 		content: 'ABCDEFGHI',
@@ -662,6 +697,7 @@ var structureDataAdd = function (i, n) {
 		updatedAt: time	
 	};
 	
+	// zStructureData13
 	var data13 = {
 		serverId: null,
 		obj1: 0,
