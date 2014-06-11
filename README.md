@@ -15,7 +15,7 @@ Diese Anwendung entsteht im Rahmen einer Bachelorarbeit mit dem Thema *Eine Fall
 ### Server
 * [node.js](http://nodejs.org/) (Server)
 * [MongoDB](https://www.mongodb.org/) (Datenbank)
-* [mongoose](http://mongoosejs.com/) (Wrapper fÃ¼r MongoDB)
+* [mongoose](http://mongoosejs.com/) (Wrapper für MongoDB)
 * [socket.io](http://socket.io/) (Server-Verbindung)
 
 ## Zusammenfassung
